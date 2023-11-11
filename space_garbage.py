@@ -13,8 +13,8 @@ garbage_coroutines = []
 
 
 def load_file(filename):
-  with open(filename, "r") as frame:
-    return frame.read()
+    with open(filename, "r") as frame:
+        return frame.read()
 
 async def wait(seconds):
     iteration_count = int(seconds * 10)
@@ -22,17 +22,17 @@ async def wait(seconds):
         await asyncio.sleep(0)
 
 def position_garbage(frame):
-  _, column = get_frame_size(frame)
-  return column
+    _, column = get_frame_size(frame)
+    return column
   
 
 def create_garbages(canvas, garbages, number=1):
-  rows_number, columns_number = canvas.getmaxyx()
-  column = columns_number-1
-  for garbage in range(number):
-    element = random.choice(garbages)
-    pos = random.randint(1, column)
-    yield element, pos
+    rows_number, columns_number = canvas.getmaxyx()
+    column = columns_number-1
+    for garbage in range(number):
+        element = random.choice(garbages)
+        pos = random.randint(1, column)
+        yield element, pos
 
 async def fly_garbage(canvas, column, garbage_frame, speed=0.2):
     """Animate garbage, flying from top to bottom. Сolumn position will stay same, as specified on start."""
@@ -55,23 +55,23 @@ async def fill_orbit_with_garbage(canvas, width):
 
   garbages = [load_file(f"garbage/{garbage_frame}") for garbage_frame in list_garbage_frame]
   while True:
-    pos = random.randint(1, width-1)
-    element = random.choice(garbages)
-    garbage_coroutines.append(fly_garbage(canvas, pos, element))
-    await wait(2)
+      pos = random.randint(1, width-1)
+      element = random.choice(garbages)
+      garbage_coroutines.append(fly_garbage(canvas, pos, element))
+      await wait(2)
   
 def some(canvas):
-  curses.curs_set(False)
-  canvas.border()
-  canvas.nodelay(True)
+    curses.curs_set(False)
+    canvas.border()
+    canvas.nodelay(True)
 
-  height, width = canvas.getmaxyx()
-  garbage_coroutines.append(fill_orbit_with_garbage(canvas, width))
-  while True:
-    for value in garbage_coroutines[:]:
-      try:
-        value.send(None)
-      except StopIteration:
-        garbage_coroutines.remove(value)      
-    canvas.refresh()
-    time.sleep(TIC_TIMEOUT)
+    height, width = canvas.getmaxyx()
+    garbage_coroutines.append(fill_orbit_with_garbage(canvas, width))
+    while True:
+        for value in garbage_coroutines[:]:
+            try:
+                value.send(None)
+            except StopIteration:
+                garbage_coroutines.remove(value)
+        canvas.refresh()
+        time.sleep(TIC_TIMEOUT)

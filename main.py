@@ -5,11 +5,12 @@ import random
 
 from physics import update_speed
 from run_fire import fire
-from curses_tools import draw_frame, read_controls, get_frame_size, acceleration
+from curses_tools import draw_frame, read_controls, get_frame_size
 import itertools
 
 TIC_TIMEOUT = 0.1
 ELEMENTS = ["+", "*", ".", ":"]
+animate = [] # add for fire
 
 with open("rocket_frame_1.txt", "r") as frame_1:
     rocket_frame_1 = frame_1.read()
@@ -30,7 +31,6 @@ async def animate_spaceship(canvas, y_axis, x_axis, frames):
     height, width = canvas.getmaxyx()
     current_frame = next(frame)
 
-    # row = column = 10
     row_speed = column_speed = 0
 
 
@@ -39,13 +39,10 @@ async def animate_spaceship(canvas, y_axis, x_axis, frames):
     pos_starship_x = round(x_axis) - round(size_x/2)
   
     while True:
-        direction_y, direction_x, _ = read_controls(canvas)
+        direction_y, direction_x, shot = read_controls(canvas)
 
         row_speed, column_speed = update_speed(row_speed, column_speed, direction_y, direction_x)
         pos_starship_y, pos_starship_x = pos_starship_y + row_speed, pos_starship_x + column_speed
-
-        # pos_starship_y += direction_y
-        # pos_starship_x += direction_x
 
         pos_max_y = (height - 1) - size_y
         pos_max_x = (width - 1) - size_x
@@ -59,12 +56,14 @@ async def animate_spaceship(canvas, y_axis, x_axis, frames):
         pos_starship_x = max(pos_starship_x, pos_min_x)
     
         draw_frame(canvas, pos_starship_y, pos_starship_x, current_frame)
+        if shot:
+            animate.append(fire(canvas, pos_starship_y, pos_starship_x+2))  # pos_starship_x+2 чтобы выстрел был из середины
         canvas.refresh()
     
         await go_to_sleep(0.1)
 
         draw_frame(canvas, pos_starship_y, pos_starship_x, current_frame, negative=True)
-    
+
         current_frame = next(frame)
 
       
@@ -92,7 +91,7 @@ async def blink(canvas, y_axis, x_axis, symbol, sequence=1):
 
       
 def create_stars(latitude, longitude, number=50):
-    for star in range(number):
+    for _ in range(number):
         y_axis = random.randint(1, latitude - 2)
         x_axis = random.randint(1, longitude - 2)
         element = random.choice(ELEMENTS)
@@ -114,18 +113,20 @@ def draw(canvas):
         blink(canvas, y_axis, x_axis, symbol, random.randint(0, 3))
         for y_axis, x_axis, symbol in create_stars(height, width)
     ]
+
+    for star in stars:
+       animate.append(star)
     run_spaceship = animate_spaceship(canvas, start_y, start_x, few_frame)
-    stars.append(run_spaceship)
-  
+    animate.append(run_spaceship) # добавил выстрел
 
     while True:
         index = 0
-        while index < len(stars):
-            star = stars[index]
+        while index < len(animate):
+            value = animate[index]
             try:
-                star.send(None)
+                value.send(None)
             except StopIteration:
-                stars.remove(star)
+                animate.remove(value)
             index += 1
       
         canvas.refresh()

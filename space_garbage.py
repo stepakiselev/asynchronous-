@@ -75,3 +75,7 @@ def some(canvas):
                 garbage_coroutines.remove(value)
         canvas.refresh()
         time.sleep(TIC_TIMEOUT)
+
+
+# curses.update_lines_cols()
+# curses.wrapper(some)

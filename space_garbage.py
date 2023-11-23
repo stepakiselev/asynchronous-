@@ -6,10 +6,11 @@ import time
 import curses
 import itertools
 from curses_tools import get_frame_size
-
+from obstacles import show_obstacles, Obstacle
 
 TIC_TIMEOUT = 0.1
 garbage_coroutines = []
+obstacles = []
 
 
 def load_file(filename):
@@ -42,11 +43,15 @@ async def fly_garbage(canvas, column, garbage_frame, speed=0.2):
     column = min(column, columns_number - 1)
 
     row = 0
-
+    # obstacle = Obstacle(row, column)
     while row < rows_number:
         draw_frame(canvas, row, column, garbage_frame)
+        obstacle = Obstacle(row, column)
+        obstacles.append(obstacle)
+        # garbage_coroutines.append(show_obstacles(canvas, obstacle))
         await asyncio.sleep(0)
         draw_frame(canvas, row, column, garbage_frame, negative=True)
+        # show_obstacles(canvas, obstacle)
         row += speed
 
 
@@ -57,7 +62,10 @@ async def fill_orbit_with_garbage(canvas, width):
   while True:
       pos = random.randint(1, width-1)
       element = random.choice(garbages)
+      # print(__str__.element)
       garbage_coroutines.append(fly_garbage(canvas, pos, element))
+      # obstacle = Obstacle(0, pos)
+      garbage_coroutines.append(show_obstacles(canvas, obstacles)) # add
       await wait(2)
   
 def some(canvas):
@@ -77,5 +85,5 @@ def some(canvas):
         time.sleep(TIC_TIMEOUT)
 
 
-# curses.update_lines_cols()
-# curses.wrapper(some)
+curses.update_lines_cols()
+curses.wrapper(some)

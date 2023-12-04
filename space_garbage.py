@@ -7,10 +7,9 @@ import curses
 import itertools
 from curses_tools import get_frame_size
 from obstacles import show_obstacles, Obstacle
+import variables
 
 TIC_TIMEOUT = 0.1
-garbage_coroutines = []
-obstacles = []
 
 
 def load_file(filename):
@@ -47,11 +46,11 @@ async def fly_garbage(canvas, column, garbage_frame, speed=0.2):
 
     while row < rows_number:
         obstacle = Obstacle(row, column, rows_size, columns_size) # add
-        obstacles.append(obstacle)  # add
+        variables.obstacles.append(obstacle) #add
         draw_frame(canvas, row, column, garbage_frame)
         await asyncio.sleep(0)
         draw_frame(canvas, row, column, garbage_frame, negative=True)
-        obstacles.remove(obstacle) # add
+        variables.obstacles.remove(obstacle)
         row += speed
 
 
@@ -62,8 +61,8 @@ async def fill_orbit_with_garbage(canvas, width):
   while True:
       pos = random.randint(1, width-1)
       element = random.choice(garbages)
-      garbage_coroutines.append(fly_garbage(canvas, pos, element))
-      garbage_coroutines.append(show_obstacles(canvas, obstacles)) # add
+      variables.garbage_coroutines.append(fly_garbage(canvas, pos, element))
+      variables.garbage_coroutines.append(show_obstacles(canvas, variables.obstacles)) # add
       await wait(2)
   
 def some(canvas):
@@ -72,16 +71,16 @@ def some(canvas):
     canvas.nodelay(True)
 
     height, width = canvas.getmaxyx()
-    garbage_coroutines.append(fill_orbit_with_garbage(canvas, width))
+    variables.garbage_coroutines.append(fill_orbit_with_garbage(canvas, width))
     while True:
-        for value in garbage_coroutines[:]:
+        for value in variables.garbage_coroutines[:]:
             try:
                 value.send(None)
             except StopIteration:
-                garbage_coroutines.remove(value)
+                variables.garbage_coroutines.remove(value)
         canvas.refresh()
         time.sleep(TIC_TIMEOUT)
 
 
-curses.update_lines_cols()
-curses.wrapper(some)
+# curses.update_lines_cols()
+# curses.wrapper(some)

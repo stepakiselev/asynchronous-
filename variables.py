@@ -1,0 +1,2 @@
+garbage_coroutines = []
+obstacles = []

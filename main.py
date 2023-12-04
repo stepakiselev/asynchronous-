@@ -8,9 +8,12 @@ from run_fire import fire
 from curses_tools import draw_frame, read_controls, get_frame_size
 import itertools
 
+from space_garbage import fill_orbit_with_garbage, some
+import variables
+
 TIC_TIMEOUT = 0.1
 ELEMENTS = ["+", "*", ".", ":"]
-animate = [] # add for fire
+# animate = [] # add for fire
 
 with open("rocket_frame_1.txt", "r") as frame_1:
     rocket_frame_1 = frame_1.read()
@@ -57,7 +60,7 @@ async def animate_spaceship(canvas, y_axis, x_axis, frames):
     
         draw_frame(canvas, pos_starship_y, pos_starship_x, current_frame)
         if shot:
-            animate.append(fire(canvas, pos_starship_y, pos_starship_x+2))  # pos_starship_x+2 чтобы выстрел был из середины
+            variables.garbage_coroutines.append(fire(canvas, pos_starship_y, pos_starship_x+2))  # pos_starship_x+2 чтобы выстрел был из середины
         canvas.refresh()
     
         await go_to_sleep(0.1)
@@ -102,7 +105,6 @@ def draw(canvas):
     curses.curs_set(False)
     canvas.border()
     canvas.nodelay(True)
-  
     height, width = canvas.getmaxyx()
     few_frame = [rocket_frame_1, rocket_frame_2]
 
@@ -115,23 +117,21 @@ def draw(canvas):
     ]
 
     for star in stars:
-       animate.append(star)
+       variables.garbage_coroutines.append(star)
+
     run_spaceship = animate_spaceship(canvas, start_y, start_x, few_frame)
-    animate.append(run_spaceship) # добавил выстрел
+    variables.garbage_coroutines.append(run_spaceship) # добавил выстрел
+    variables.garbage_coroutines.append(fill_orbit_with_garbage(canvas, width))
 
     while True:
-        index = 0
-        while index < len(animate):
-            value = animate[index]
+        for value in variables.garbage_coroutines[:]:
             try:
                 value.send(None)
             except StopIteration:
-                animate.remove(value)
-            index += 1
-      
+                variables.garbage_coroutines.remove(value)
         canvas.refresh()
         time.sleep(TIC_TIMEOUT)
-  
+
 if __name__ == '__main__':
     curses.update_lines_cols()
     curses.wrapper(draw)

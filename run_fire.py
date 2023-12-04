@@ -1,5 +1,6 @@
 import asyncio
 import curses
+import variables
 
 
 async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0):
@@ -24,8 +25,12 @@ async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0
     curses.beep()
 
     while 0 < row < max_row and 0 < column < max_column:
+        for obstacle in variables.obstacles:
+            if obstacle.has_collision(row, column):  # add
+                return
+
         canvas.addstr(round(row), round(column), symbol)
         await asyncio.sleep(0)
         canvas.addstr(round(row), round(column), ' ')
         row += rows_speed
-        column += columns_speed  
+        column += columns_speed

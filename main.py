@@ -8,12 +8,11 @@ from run_fire import fire
 from curses_tools import draw_frame, read_controls, get_frame_size
 import itertools
 
-from space_garbage import fill_orbit_with_garbage, some
+from space_garbage import fill_orbit_with_garbage
 import variables
 
 TIC_TIMEOUT = 0.1
 ELEMENTS = ["+", "*", ".", ":"]
-# animate = [] # add for fire
 
 with open("rocket_frame_1.txt", "r") as frame_1:
     rocket_frame_1 = frame_1.read()
@@ -119,18 +118,20 @@ def draw(canvas):
     for star in stars:
        variables.garbage_coroutines.append(star)
 
-    run_spaceship = animate_spaceship(canvas, start_y, start_x, few_frame)
-    variables.garbage_coroutines.append(run_spaceship) # добавил выстрел
+    variables.garbage_coroutines.append(animate_spaceship(canvas, start_y, start_x, few_frame)) # добавил выстрел
     variables.garbage_coroutines.append(fill_orbit_with_garbage(canvas, width))
-
     while True:
         for value in variables.garbage_coroutines[:]:
             try:
                 value.send(None)
             except StopIteration:
                 variables.garbage_coroutines.remove(value)
+            except Exception as e:
+                print(f"Error in coroutine: {e}")
         canvas.refresh()
-        time.sleep(TIC_TIMEOUT)
+        # time.sleep(TIC_TIMEOUT)
+        # Замена time.sleep на curses.napms
+        curses.napms(int(TIC_TIMEOUT * 1000))
 
 if __name__ == '__main__':
     curses.update_lines_cols()

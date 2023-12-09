@@ -10,6 +10,8 @@ from obstacles import show_obstacles, Obstacle
 import variables
 
 TIC_TIMEOUT = 0.1
+DEFAULT_SPEED = 0.2
+MAX_SLEEP_TIME = 0  # если поставить значение больше нуля все поламается
 
 
 def load_file(filename):
@@ -24,7 +26,6 @@ async def wait(seconds):
 def position_garbage(frame):
     _, column = get_frame_size(frame)
     return column
-  
 
 def create_garbages(canvas, garbages, number=1):
     rows_number, columns_number = canvas.getmaxyx()
@@ -34,24 +35,53 @@ def create_garbages(canvas, garbages, number=1):
         pos = random.randint(1, column)
         yield element, pos
 
-async def fly_garbage(canvas, column, garbage_frame, speed=0.2):
-    """Animate garbage, flying from top to bottom. Сolumn position will stay same, as specified on start."""
-    rows_number, columns_number = canvas.getmaxyx()
+async def fly_garbage(canvas, column, garbage_frame, speed=DEFAULT_SPEED):
+    """
+    Animate garbage, flying from top to bottom. Column position will stay same, as specified on start.
 
-    column = max(column, 0)
-    column = min(column, columns_number - 1)
+    :param canvas: Canvas to draw the garbage.
+    :param column: Column in which the garbage will fly.
+    :param garbage_frame: Frame representation of the garbage.
+    :param speed: Speed of the garbage movement, defaults to 0.2.
+    """
+    try:
+        rows_number, columns_number = canvas.getmaxyx()
 
-    row = 0
-    rows_size, columns_size = get_frame_size(garbage_frame)
+        # Обеспечиваем, что мусор остаётся в пределах холста
+        column = max(min(column, columns_number - 1), 0)
 
-    while row < rows_number:
-        obstacle = Obstacle(row, column, rows_size, columns_size) # add
-        variables.obstacles.append(obstacle) #add
-        draw_frame(canvas, row, column, garbage_frame)
-        await asyncio.sleep(0)
-        draw_frame(canvas, row, column, garbage_frame, negative=True)
-        variables.obstacles.remove(obstacle)
-        row += speed
+        row = 0
+        rows_size, columns_size = get_frame_size(garbage_frame)
+
+        # Создание и добавление препятствия
+        obstacle = Obstacle(row, column, rows_size, columns_size)
+        variables.obstacles.append(obstacle)
+
+        while row < rows_number:
+            # Проверка на столкновение с пулей
+            if obstacle in variables.obstacles_in_last_collisions:
+                variables.obstacles.remove(obstacle)
+                variables.obstacles_in_last_collisions.clear()
+                return  # Препятствие уничтожено, завершаем анимацию
+
+            draw_frame(canvas, row, column, garbage_frame)
+
+            # Ожидание с учётом скорости
+            sleep_time = min(MAX_SLEEP_TIME, 1 / speed)
+            await asyncio.sleep(sleep_time)
+
+            draw_frame(canvas, row, column, garbage_frame, negative=True)
+            row += speed
+            # Обновление позиции препятствия
+            obstacle.row = row
+
+    except Exception as e:
+        # Обработка возможных исключений
+        print(f"Error during garbage animation: {e}")
+    finally:
+        # Убеждаемся, что препятствие удаляется при завершении анимации
+        if obstacle in variables.obstacles:
+            variables.obstacles.remove(obstacle)
 
 
 async def fill_orbit_with_garbage(canvas, width):
@@ -80,6 +110,9 @@ def some(canvas):
                 variables.garbage_coroutines.remove(value)
         canvas.refresh()
         time.sleep(TIC_TIMEOUT)
+
+        # # Замена time.sleep на curses.napms
+        # curses.napms(int(TIC_TIMEOUT * 1000))
 
 
 # curses.update_lines_cols()

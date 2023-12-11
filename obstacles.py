@@ -1,5 +1,6 @@
 import asyncio
 from curses_tools import draw_frame
+# from space_garbage import load_file
 
 
 class Obstacle:
@@ -85,3 +86,10 @@ def has_collision(obstacle_corner, obstacle_size, obj_corner, obj_size=(1, 1)):
         _is_point_inside(*obj_corner, *obj_size, *obstacle_corner),
         _is_point_inside(*obj_corner, *obj_size, *opposite_obstacle_corner),
     ])
+
+# def show_game_over(canvas):
+#     # game_over_frame = os.listdir(path="text")
+#     rows_number, columns_number = canvas.getmaxyx()
+#
+#     game_over_frame = load_file("text/game_over")
+#     draw_frame(canvas, rows_number / 2, columns_number / 2, game_over_frame)

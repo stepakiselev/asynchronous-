@@ -1,10 +1,20 @@
 import asyncio
 import curses
 import variables
+import logging
 
 from curses_tools import draw_frame, get_frame_size
 from explosion import explode
 from space_garbage import load_file
+
+# Logging configuration
+logging.basicConfig(
+    filename='app.log',
+    filemode='a',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.DEBUG
+)
+
 
 DEFAULT_ROW_SPEED = -0.8
 DEFAULT_COLUMN_SPEED = 0
@@ -12,6 +22,13 @@ BULLET_SPEED_DELAY = 0
 
 
 async def show_game_over(canvas, rows_number, columns_number):
+    """
+    Show 'Game Over' text animation in the canvas.
+
+    :param canvas: The canvas where the text will be shown.
+    :param rows_number: Number of rows in the canvas.
+    :param columns_number: Number of columns in the canvas.
+    """
     try:
         game_over_frame = load_file("text/game_over.txt")
         rows, columns = get_frame_size(game_over_frame)
@@ -20,13 +37,21 @@ async def show_game_over(canvas, rows_number, columns_number):
         while True:
             draw_frame(canvas, rows_middle, columns_middle, game_over_frame)
             await asyncio.sleep(0)
+            # await wait(0)
             draw_frame(canvas, rows_middle, columns_middle, game_over_frame, negative=True)
     except Exception as e:
-        print(f"Error in fire function: {e}")
-
+        logging.error(f"Error in show_game_over function: {e}", exc_info=True)
 
 async def fire(canvas, start_row, start_column, rows_speed=DEFAULT_ROW_SPEED, columns_speed=DEFAULT_COLUMN_SPEED):
-    """Display animation of gun shot, direction and speed can be specified."""
+    """
+    Display animation of a gun shot with specified direction and speed.
+
+    :param canvas: The canvas where the shot will be animated.
+    :param start_row: The starting row position of the shot.
+    :param start_column: The starting column position of the shot.
+    :param rows_speed: Vertical speed of the shot.
+    :param columns_speed: Horizontal speed of the shot.
+    """
     try:
         row, column = start_row, start_column
 
@@ -62,4 +87,4 @@ async def fire(canvas, start_row, start_column, rows_speed=DEFAULT_ROW_SPEED, co
             row += rows_speed
             column += columns_speed
     except Exception as e:
-        print(f"Error in fire function: {e}")
+        logging.error(f"Error in fire function: {e}", exc_info=True)

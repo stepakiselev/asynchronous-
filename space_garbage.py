@@ -1,3 +1,4 @@
+import logging
 import asyncio
 import os
 import random
@@ -11,10 +12,22 @@ TIC_TIMEOUT = 0.1
 DEFAULT_SPEED = 0.2
 MAX_SLEEP_TIME = 0  # если поставить значение больше нуля все поламается
 
+# Logging configuration
+logging.basicConfig(
+    filename='app.log',
+    filemode='a',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.DEBUG
+)
 
 def get_garbage_delay_tic(year):
+    """
+    Calculate the delay for garbage appearance based on the year.
+
+    :param year: Year to determine the rate of garbage appearance.
+    :return: Delay in ticks until the next appearance of garbage.
+    """
     if year < 1961:
-        # return None
         return 30
     elif year < 1969:
         return 20
@@ -30,15 +43,36 @@ def get_garbage_delay_tic(year):
         return 2
 
 def load_file(filename):
-    with open(filename, "r") as frame:
-        return frame.read()
+    """
+    Load the content of a file.
+
+    :param filename: Name of the file to be loaded.
+    :return: Content of the file as a string.
+    """
+    try:
+        with open(filename, "r") as frame:
+            return frame.read()
+    except Exception as e:
+        logging.error(f"Error loading file {filename}: {e}", exc_info=True)
+        return None
 
 async def wait(seconds):
+    """
+    Asynchronously wait for a given number of seconds.
+
+    :param seconds: Number of seconds to wait.
+    """
     iteration_count = int(seconds * 10)
     for _ in range(iteration_count):
         await asyncio.sleep(0)
 
 def position_garbage(frame):
+    """
+    Get the position for placing garbage on the canvas.
+
+    :param frame: Frame of the garbage.
+    :return: Column for placing the garbage.
+    """
     _, column = get_frame_size(frame)
     return column
 
@@ -84,27 +118,41 @@ async def fly_garbage(canvas, column, garbage_frame, speed=DEFAULT_SPEED):
 
     except Exception as e:
         # Обработка возможных исключений
-        print(f"Error during garbage animation: {e}")
+        logging.error(f"Error in fly_garbage: {e}", exc_info=True)
     finally:
         # Убеждаемся, что препятствие удаляется при завершении анимации
         if obstacle in variables.obstacles:
             variables.obstacles.remove(obstacle)
 
-
 async def fill_orbit_with_garbage(canvas, width):
-    list_garbage_frame = os.listdir(path="garbage")
+    """
+    Continuously fill the orbit with garbage.
 
-    garbages = [load_file(f"garbage/{garbage_frame}") for garbage_frame in list_garbage_frame]
-    while True:
-        level = get_garbage_delay_tic(variables.year)/10
-        amount = 3  # количество мусора на старте
-        for _ in range(1, random.randint(1, amount)):
-            variables.garbage_coroutines.append(
-                fly_garbage(
-                    canvas,
-                    random.randint(1, width-1),
-                    random.choice(garbages)
-                )
-            )
-        await wait(level)
-        amount += 2
+    :param canvas: Canvas for drawing.
+    :param width: Width of the canvas.
+    """
+    try:
+        list_garbage_frame = os.listdir(path="garbage")
+        if not list_garbage_frame:
+            logging.warning("No garbage frames found in 'garbage' directory")
+            return
+        garbages = [load_file(f"garbage/{garbage_frame}") for garbage_frame in list_garbage_frame]
+
+        amount = 3  # начальное количество мусора
+        max_amount = 10  # максимальное количество мусора
+
+        while True:
+            delay_factor = get_garbage_delay_tic(variables.year)
+            sleep_time = delay_factor / 10  # преобразование задержки
+
+            garbage_count = random.randint(1, min(amount, max_amount))
+            for _ in range(garbage_count):
+                column = random.randint(1, width - 1)
+                garbage_frame = random.choice(garbages)
+                variables.garbage_coroutines.append(fly_garbage(canvas, column, garbage_frame))
+
+            await wait(sleep_time)
+            # Увеличение количества мусора с ограничением
+            amount = min(amount + 2, max_amount)
+    except Exception as e:
+        logging.error(f"Error in fill_orbit_with_garbage: {e}", exc_info=True)

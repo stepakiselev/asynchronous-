@@ -1,22 +1,22 @@
-import time
-import curses
 import asyncio
+import curses
+import itertools
 import random
 
+import variables
+from curses_tools import draw_frame, read_controls, get_frame_size
 from explosion import explode
+from game_scenario import show_phrases
 from physics import update_speed
 from run_fire import fire, show_game_over
-from curses_tools import draw_frame, read_controls, get_frame_size
-import itertools
-
 from space_garbage import fill_orbit_with_garbage, load_file
-import variables
 
 TIC_TIMEOUT = 0.1
 ELEMENTS = ["+", "*", ".", ":"]
 TIC_RATE = 0.1
 POS_MIN_Y = 1
 POS_MIN_X = 1
+TIME_PHASE = 5
 
 rocket_frame_1 = load_file("text/rocket_frame_1.txt")
 rocket_frame_2 = load_file("text/rocket_frame_2.txt")
@@ -54,7 +54,6 @@ async def animate_spaceship(canvas, y_axis, x_axis, frames):
                 variables.obstacles_in_last_collisions.append(obstacle)
                 variables.garbage_coroutines.append(show_game_over(canvas, height, width))
                 await explode(canvas, round(row), round(column))
-                # variables.garbage_coroutines.append(show_game_over(canvas, height, width))
                 return
 
         draw_frame(canvas, row, column, current_frame)
@@ -102,10 +101,20 @@ def create_stars(latitude, longitude, number=50):
   
 def draw(canvas):
     curses.curs_set(False)
-    canvas.border()
     canvas.nodelay(True)
     height, width = canvas.getmaxyx()
     few_frame = [rocket_frame_1, rocket_frame_2]
+    # Определение размеров подокна
+    status_window_height = 3
+    status_window_width = 60
+
+    # Расположение подокна в левом нижнем углу
+    status_window_y = height - status_window_height  # В нижней части основного окна
+    status_window_x = 0  # В левой части основного окна
+
+    # Создание подокна
+    status_window = canvas.derwin(status_window_height, status_window_width, status_window_y, status_window_x)
+    variables.garbage_coroutines.append(show_phrases(canvas, status_window, status_window_width, phase=TIME_PHASE))
 
     start_y = height - 5
     start_x =  width / 2
@@ -129,12 +138,14 @@ def draw(canvas):
             except Exception as e:
                 print(f"Error in coroutine: {e}")
         canvas.refresh()
-        # time.sleep(TIC_TIMEOUT)
-        # Замена time.sleep на curses.napms
+        canvas.border()
+
+        # Перерисовка рамки подокна
+        status_window.box()
+        status_window.addstr(1, (status_window_width - len(variables.text)) // 2, variables.text)
+        status_window.refresh()
         curses.napms(int(TIC_TIMEOUT * 1000))
 
 if __name__ == '__main__':
     curses.update_lines_cols()
     curses.wrapper(draw)
-    # for i in variables.log:
-    #     print(i)

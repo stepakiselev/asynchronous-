@@ -1,18 +1,33 @@
-from curses_tools import draw_frame
 import asyncio
 import os
 import random
-import time
-import curses
-import itertools
-from curses_tools import get_frame_size
-from obstacles import show_obstacles, Obstacle
+
 import variables
+from curses_tools import draw_frame
+from curses_tools import get_frame_size
+from obstacles import Obstacle
 
 TIC_TIMEOUT = 0.1
 DEFAULT_SPEED = 0.2
 MAX_SLEEP_TIME = 0  # если поставить значение больше нуля все поламается
 
+
+def get_garbage_delay_tic(year):
+    if year < 1961:
+        # return None
+        return 30
+    elif year < 1969:
+        return 20
+    elif year < 1981:
+        return 14
+    elif year < 1995:
+        return 10
+    elif year < 2010:
+        return 8
+    elif year < 2020:
+        return 6
+    else:
+        return 2
 
 def load_file(filename):
     with open(filename, "r") as frame:
@@ -26,14 +41,6 @@ async def wait(seconds):
 def position_garbage(frame):
     _, column = get_frame_size(frame)
     return column
-
-def create_garbages(canvas, garbages, number=1):
-    rows_number, columns_number = canvas.getmaxyx()
-    column = columns_number-1
-    for garbage in range(number):
-        element = random.choice(garbages)
-        pos = random.randint(1, column)
-        yield element, pos
 
 async def fly_garbage(canvas, column, garbage_frame, speed=DEFAULT_SPEED):
     """
@@ -85,35 +92,19 @@ async def fly_garbage(canvas, column, garbage_frame, speed=DEFAULT_SPEED):
 
 
 async def fill_orbit_with_garbage(canvas, width):
-  list_garbage_frame = os.listdir(path="garbage")
+    list_garbage_frame = os.listdir(path="garbage")
 
-  garbages = [load_file(f"garbage/{garbage_frame}") for garbage_frame in list_garbage_frame]
-  while True:
-      pos = random.randint(1, width-1)
-      element = random.choice(garbages)
-      variables.garbage_coroutines.append(fly_garbage(canvas, pos, element))
-      variables.garbage_coroutines.append(show_obstacles(canvas, variables.obstacles)) # add
-      await wait(2)
-  
-def some(canvas):
-    curses.curs_set(False)
-    canvas.border()
-    canvas.nodelay(True)
-
-    height, width = canvas.getmaxyx()
-    variables.garbage_coroutines.append(fill_orbit_with_garbage(canvas, width))
+    garbages = [load_file(f"garbage/{garbage_frame}") for garbage_frame in list_garbage_frame]
     while True:
-        for value in variables.garbage_coroutines[:]:
-            try:
-                value.send(None)
-            except StopIteration:
-                variables.garbage_coroutines.remove(value)
-        canvas.refresh()
-        time.sleep(TIC_TIMEOUT)
-
-        # # Замена time.sleep на curses.napms
-        # curses.napms(int(TIC_TIMEOUT * 1000))
-
-
-# curses.update_lines_cols()
-# curses.wrapper(some)
+        level = get_garbage_delay_tic(variables.year)/10
+        amount = 3  # количество мусора на старте
+        for _ in range(1, random.randint(1, amount)):
+            variables.garbage_coroutines.append(
+                fly_garbage(
+                    canvas,
+                    random.randint(1, width-1),
+                    random.choice(garbages)
+                )
+            )
+        await wait(level)
+        amount += 2

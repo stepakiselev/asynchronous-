@@ -25,6 +25,16 @@ def load_file(filename):
 
 
 def get_frames(path):
+    """
+    Load and return a list of frames from the specified directory.
+
+    This function reads files from the given directory and returns a list of their contents.
+    It is primarily used for loading frame data for animations or graphical elements in the game.
+    If the specified directory does not exist or is empty, an error is logged, and the function returns None.
+
+    :param path: The path to the directory containing frame files.
+    :return: A list of strings, each representing the content of a frame file. Returns None if the directory is missing or empty.
+    """
     if not os.path.exists(path) or not os.listdir(path):
         logging.error(f"Directory '{path}' is missing or empty.")
         return  # Завершаем программу, если директория отсутствует или пуста
@@ -32,6 +42,7 @@ def get_frames(path):
     list_frames = os.listdir(path=path)
     list_frame = [load_file(f"{path}{frame}") for frame in list_frames]
     return list_frame
+
 
 def get_frame_size(text):
     """Calculate size of multiline text fragment, return pair — number of rows and colums."""
@@ -42,6 +53,7 @@ def get_frame_size(text):
         return rows, columns
     except Exception as e:
         logging.error(f"Error in draw_frame function: {e}", exc_info=True)
+
 
 def draw_frame(canvas, start_row, start_column, text, negative=False):
     """Draw multiline text fragment on canvas, erase text instead of drawing if negative=True is specified."""

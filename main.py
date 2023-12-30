@@ -1,16 +1,16 @@
 import curses
 import itertools
-import random
 import logging
-import os
+import random
 
 import variables
-from curses_tools import draw_frame, read_controls, get_frame_size
+from curses_tools import read_controls
 from explosion import explode
+from frame import get_frames, draw_frame, get_frame_size
 from game_scenario import show_phrases
 from physics import update_speed
 from run_fire import fire, show_game_over
-from space_garbage import fill_orbit_with_garbage, load_file, wait
+from space_garbage import fill_orbit_with_garbage, wait
 
 logging.basicConfig(
     filename='app.log',
@@ -26,38 +26,32 @@ POS_MIN_Y = 1
 POS_MIN_X = 1
 TIME_PHASE = 5
 
-rocket_frame_1 = load_file("text/rocket_frame_1.txt")
-rocket_frame_2 = load_file("text/rocket_frame_2.txt")
-
-
-async def animate_spaceship(canvas, y_axis, x_axis, frames):
+async def animate_spaceship(canvas, height, width):
     """
     Generate random positions and symbols for stars.
 
-    :param latitude: Maximum Y-axis value for star positions.
-    :param longitude: Maximum X-axis value for star positions.
-    :param number: Number of stars to generate.
+    :param canvas: Canvas on which the star will be drawn.
+    :param height: Maximum Y-axis value for star positions.
+    :param width: Maximum X-axis value for star positions.
     :return: Yields tuples of (y_axis, x_axis, symbol) for each star.
     """
-    try:
-        frame = itertools.cycle(frames)
-        height, width = canvas.getmaxyx()
-        current_frame = next(frame)
+    # ship changes animation every second beat
+    frames = sum(map(lambda x: [x, x], get_frames("text/rocket_frame/")), [])
 
-        row_speed = column_speed = 0
+    row_speed = column_speed = 0
+    frame = itertools.cycle(frames)
+    current_frame = next(frame)
 
-        size_y, size_x = get_frame_size(current_frame)
-        row = round(y_axis) - round(size_y / 2)
-        column = round(x_axis) - round(size_x / 2)
-
-        while True:
+    size_y, size_x = get_frame_size(current_frame)
+    row, column = round(height - 5) - round(size_y / 2), round(width / 2) - round(size_x / 2)
+    while True:
+        try:
             direction_y, direction_x, shot = read_controls(canvas)
 
             row_speed, column_speed = update_speed(row_speed, column_speed, direction_y, direction_x)
             row, column = row + row_speed, column + column_speed
 
-            pos_max_y = (height - 1) - size_y
-            pos_max_x = (width - 1) - size_x
+            pos_max_y, pos_max_x = (height - 1) - size_y, (width - 1) - size_x
 
             row, column = max(min(row, pos_max_y), POS_MIN_Y), max(min(column, pos_max_x), POS_MIN_X)
 
@@ -71,16 +65,14 @@ async def animate_spaceship(canvas, y_axis, x_axis, frames):
             draw_frame(canvas, row, column, current_frame)
             if shot:
                 variables.garbage_coroutines.append(fire(canvas, row, column + 2))
-            canvas.refresh()
 
             await wait(TIC_RATE)
 
             draw_frame(canvas, row, column, current_frame, negative=True)
 
             current_frame = next(frame)
-    except Exception as e:
-        logging.error(f"Error in animate_spaceship function: {e}", exc_info=True)
-
+        except Exception as e:
+            logging.error(f"Error in animate_spaceship function: {e}", exc_info=True)
 
       
 async def blink(canvas, y_axis, x_axis, symbol, sequence=1):
@@ -96,8 +88,8 @@ async def blink(canvas, y_axis, x_axis, symbol, sequence=1):
     :param symbol: The symbol used to represent the star.
     :param sequence: The initial state of the blinking sequence.
     """
-    try:
-        while True:
+    while True:
+        try:
             if sequence == 0:
                 canvas.addstr(y_axis, x_axis, symbol, curses.A_DIM)
                 await wait(2)
@@ -117,9 +109,8 @@ async def blink(canvas, y_axis, x_axis, symbol, sequence=1):
                 canvas.addstr(y_axis, x_axis, symbol)
                 await wait(0.3)
                 sequence = 0
-    except Exception as e:
-        logging.error(f"Error in blink function: {e}", exc_info=True)
-
+        except Exception as e:
+            logging.error(f"Error in blink function: {e}", exc_info=True)
 
       
 def create_stars(latitude, longitude, number=50):
@@ -129,8 +120,8 @@ def create_stars(latitude, longitude, number=50):
     This function generates random positions and characters for stars to be displayed
     on the canvas. Each star is represented by a tuple containing its position and symbol.
 
-    :param height: The height of the canvas where stars will be placed.
-    :param width: The width of the canvas where stars will be placed.
+    :param latitude: The height of the canvas where stars will be placed.
+    :param longitude: The width of the canvas where stars will be placed.
     :param number: The number of stars to generate.
     :return: Yields tuples (y_axis, x_axis, symbol) for each generated star.
     """
@@ -140,64 +131,58 @@ def create_stars(latitude, longitude, number=50):
         element = random.choice(ELEMENTS)
         yield y_axis, x_axis, element
 
+
+def draw_stars(canvas, height, width):
+    stars = [
+        blink(canvas, y_axis, x_axis, symbol, random.randint(0, 3))
+        for y_axis, x_axis, symbol in create_stars(height, width)
+    ]
+
+    for star in stars:
+       variables.garbage_coroutines.append(star)
+
+
+def draw_window(canvas, height):
+    # Определение размеров подокна
+    status_window_height = 3
+    status_window_width = 60
+
+    # Расположение подокна в левом нижнем углу
+    status_window_y = height - status_window_height
+    status_window_x = 0
+
+    # Создание подокна
+    status_window = canvas.derwin(status_window_height, status_window_width, status_window_y, status_window_x)
+    status_window.box()
+    status_window.addstr(1, (status_window_width - len(variables.text)) // 2, variables.text)
+    status_window.refresh()
+
   
 def draw(canvas):
     """
     Main drawing function for the game.
     :param canvas: Main canvas of the game where elements are drawn.
     """
-    try:
-        garbage_dir = "garbage"
-        if not os.path.exists(garbage_dir) or not os.listdir(garbage_dir):
-            logging.error(f"Directory '{garbage_dir}' is missing or empty.")
-            return  # Завершаем программу, если директория отсутствует или пуста
-
-        curses.curs_set(False)
-        canvas.nodelay(True)
-        height, width = canvas.getmaxyx()
-        few_frame = [rocket_frame_1, rocket_frame_2]
-        # Определение размеров подокна
-        status_window_height = 3
-        status_window_width = 60
-
-        # Расположение подокна в левом нижнем углу
-        status_window_y = height - status_window_height
-        status_window_x = 0
-
-        # Создание подокна
-        status_window = canvas.derwin(status_window_height, status_window_width, status_window_y, status_window_x)
-        variables.garbage_coroutines.append(show_phrases(canvas, status_window, status_window_width, phase=TIME_PHASE))
-
-        start_y = height - 5
-        start_x =  width / 2
-
-        stars = [
-            blink(canvas, y_axis, x_axis, symbol, random.randint(0, 3))
-            for y_axis, x_axis, symbol in create_stars(height, width)
-        ]
-
-        for star in stars:
-           variables.garbage_coroutines.append(star)
-
-        variables.garbage_coroutines.append(animate_spaceship(canvas, start_y, start_x, few_frame))
-        variables.garbage_coroutines.append(fill_orbit_with_garbage(canvas, width))
-        while True:
-            for value in variables.garbage_coroutines[:]:
-                try:
-                    value.send(None)
-                except StopIteration:
-                    variables.garbage_coroutines.remove(value)
-                except Exception as e:
-                    logging.error(f"Error inside while of draw function: {e}", exc_info=True)
-            canvas.refresh()
-            canvas.border()
-            # Перерисовка рамки подокна
-            status_window.box()
-            status_window.addstr(1, (status_window_width - len(variables.text)) // 2, variables.text)
-            status_window.refresh()
-            curses.napms(int(TIC_TIMEOUT * 1000))
-    except Exception as e:
-        logging.error(f"Error in draw function: {e}", exc_info=True)
+    curses.curs_set(False)
+    canvas.nodelay(True)
+    height, width = canvas.getmaxyx()
+    draw_stars(canvas, height, width)
+    variables.garbage_coroutines.append(show_phrases(canvas, phase=TIME_PHASE))
+    variables.garbage_coroutines.append(animate_spaceship(canvas, height, width))
+    variables.garbage_coroutines.append(fill_orbit_with_garbage(canvas, width))
+    while True:
+        for value in variables.garbage_coroutines[:]:
+            try:
+                value.send(None)
+            except StopIteration:
+                variables.garbage_coroutines.remove(value)
+            except Exception as e:
+                logging.error(f"Error inside while of draw function: {e}", exc_info=True)
+        canvas.border()
+        canvas.refresh()
+        # Перерисовка рамки подокна
+        draw_window(canvas, height)
+        curses.napms(int(TIC_TIMEOUT * 1000))
 
 
 if __name__ == '__main__':

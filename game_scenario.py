@@ -22,13 +22,11 @@ PHRASES = {
     2020: "Take the plasma gun! Shoot the garbage!",
 }
 
-async def show_phrases(canvas, status_window, status_window_width, phase):
+async def show_phrases(canvas, phase):
     """
     Display changing phrases in the status window.
 
     :param canvas: Canvas for drawing.
-    :param status_window: Window where the status will be shown.
-    :param status_window_width: Width of the status window.
     :param phase: Delay between changing phrases.
     """
     try:
@@ -36,10 +34,6 @@ async def show_phrases(canvas, status_window, status_window_width, phase):
             # Updating global variable 'year' to reflect current phrase's year
             variables.year = year
             status_text = f"{year}: {text}"
-            # Adjusting the text to fit in the status window
-            if len(status_text) > status_window_width - 2:
-                status_text = status_text[:status_window_width - 8] + '...'
-            # Updating global variable 'text' to hold the current status text
             variables.text = status_text
             await wait(phase)
     except Exception as e:

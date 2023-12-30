@@ -2,12 +2,12 @@ import asyncio
 import curses
 import variables
 import logging
+import os
 
-from curses_tools import draw_frame, get_frame_size
+from frame import load_file, draw_frame, get_frame_size
 from explosion import explode
-from space_garbage import load_file
 
-# Logging configuration
+
 logging.basicConfig(
     filename='app.log',
     filemode='a',
@@ -29,18 +29,23 @@ async def show_game_over(canvas, rows_number, columns_number):
     :param rows_number: Number of rows in the canvas.
     :param columns_number: Number of columns in the canvas.
     """
-    try:
-        game_over_frame = load_file("text/game_over.txt")
-        rows, columns = get_frame_size(game_over_frame)
+    text_dir = "text"
+    if not os.path.exists(text_dir) or not os.listdir(text_dir):
+        logging.error(f"Directory '{text_dir}' is missing or empty.")
+        return  # Завершаем программу, если директория отсутствует или пуста
 
-        rows_middle, columns_middle = (rows_number/2)-rows/2, (columns_number/2)-columns/2
+    game_over_frame = load_file("text/game_over.txt")
+    rows, columns = get_frame_size(game_over_frame)
+
+    rows_middle, columns_middle = (rows_number/2)-rows/2, (columns_number/2)-columns/2
+    try:
         while True:
             draw_frame(canvas, rows_middle, columns_middle, game_over_frame)
             await asyncio.sleep(0)
-            # await wait(0)
             draw_frame(canvas, rows_middle, columns_middle, game_over_frame, negative=True)
     except Exception as e:
         logging.error(f"Error in show_game_over function: {e}", exc_info=True)
+
 
 async def fire(canvas, start_row, start_column, rows_speed=DEFAULT_ROW_SPEED, columns_speed=DEFAULT_COLUMN_SPEED):
     """

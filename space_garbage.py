@@ -1,11 +1,9 @@
-import logging
 import asyncio
-import os
+import logging
 import random
 
 import variables
-from curses_tools import draw_frame
-from curses_tools import get_frame_size
+from frame import get_frames, draw_frame, get_frame_size
 from obstacles import Obstacle
 
 TIC_TIMEOUT = 0.1
@@ -42,19 +40,6 @@ def get_garbage_delay_tic(year):
     else:
         return 2
 
-def load_file(filename):
-    """
-    Load the content of a file.
-
-    :param filename: Name of the file to be loaded.
-    :return: Content of the file as a string.
-    """
-    try:
-        with open(filename, "r") as frame:
-            return frame.read()
-    except Exception as e:
-        logging.error(f"Error loading file {filename}: {e}", exc_info=True)
-        return None
 
 async def wait(seconds):
     """
@@ -65,6 +50,7 @@ async def wait(seconds):
     iteration_count = int(seconds * 10)
     for _ in range(iteration_count):
         await asyncio.sleep(0)
+
 
 def position_garbage(frame):
     """
@@ -124,6 +110,7 @@ async def fly_garbage(canvas, column, garbage_frame, speed=DEFAULT_SPEED):
         if obstacle in variables.obstacles:
             variables.obstacles.remove(obstacle)
 
+
 async def fill_orbit_with_garbage(canvas, width):
     """
     Continuously fill the orbit with garbage.
@@ -131,16 +118,10 @@ async def fill_orbit_with_garbage(canvas, width):
     :param canvas: Canvas for drawing.
     :param width: Width of the canvas.
     """
+    garbages = get_frames("garbage/")
+    amount = 3  # начальное количество мусора
+    max_amount = 10  # максимальное количество мусора
     try:
-        list_garbage_frame = os.listdir(path="garbage")
-        if not list_garbage_frame:
-            logging.warning("No garbage frames found in 'garbage' directory")
-            return
-        garbages = [load_file(f"garbage/{garbage_frame}") for garbage_frame in list_garbage_frame]
-
-        amount = 3  # начальное количество мусора
-        max_amount = 10  # максимальное количество мусора
-
         while True:
             delay_factor = get_garbage_delay_tic(variables.year)
             sleep_time = delay_factor / 10  # преобразование задержки

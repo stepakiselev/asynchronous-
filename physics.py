@@ -36,28 +36,44 @@ def _apply_acceleration(speed, speed_limit, forward=True):
     return result_speed
 
 
-def update_speed(row_speed, column_speed, rows_direction, columns_direction, row_speed_limit=20, column_speed_limit=20,
-                 fading=0.8):
-    """Update speed smootly to make control handy for player. Return new speed value (row_speed, column_speed)
+def update_speed(
+        row_speed,
+        column_speed,
+        rows_direction,
+        columns_direction,
+        row_speed_limit=20,
+        column_speed_limit=20,
+        fading=0.8
+):
+    """Update speed smootly to make control handy for player.
+    Return new speed value (row_speed, column_speed)
 
-    rows_direction — is a force direction by rows axis. Possible values:
+    rows_direction — is a force direction by rows axis.
+    Possible values:
        -1 — if force pulls up
        0  — if force has no effect
        1  — if force pulls down
-    columns_direction — is a force direction by colums axis. Possible values:
+    columns_direction — is a force direction by colums axis.
+    Possible values:
        -1 — if force pulls left
        0  — if force has no effect
        1  — if force pulls right
     """
 
     if rows_direction not in (-5, 0, 5):
-        raise ValueError(f'Wrong rows_direction value {rows_direction}. Expects -5, 0 or 5.')
+        raise ValueError(
+            f'Wrong rows_direction value {rows_direction}. Expects -5, 0 or 5.'
+        )
 
     if columns_direction not in (-5, 0, 5):
-        raise ValueError(f'Wrong columns_direction value {columns_direction}. Expects -5, 0 or 5.')
+        raise ValueError(
+            f'Wrong columns_direction value {columns_direction}. Expects -5, 0 or 5.'
+        )
 
     if fading < 0 or fading > 1:
-        raise ValueError(f'Wrong columns_direction value {fading}. Expects float between 0 and 1.')
+        raise ValueError(
+            f'Wrong columns_direction value {fading}. Expects float between 0 and 1.'
+        )
 
     # гасим скорость, чтобы корабль останавливался со временем
     row_speed *= fading

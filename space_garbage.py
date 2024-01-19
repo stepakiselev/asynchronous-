@@ -18,6 +18,7 @@ logging.basicConfig(
     level=logging.DEBUG
 )
 
+
 def get_garbage_delay_tic(year):
     """
     Calculate the delay for garbage appearance based on the year.
@@ -62,9 +63,11 @@ def position_garbage(frame):
     _, column = get_frame_size(frame)
     return column
 
+
 async def fly_garbage(canvas, column, garbage_frame, speed=DEFAULT_SPEED):
     """
-    Animate garbage, flying from top to bottom. Column position will stay same, as specified on start.
+    Animate garbage, flying from top to bottom.
+    Column position will stay same, as specified on start.
 
     :param canvas: Canvas to draw the garbage.
     :param column: Column in which the garbage will fly.
@@ -130,7 +133,9 @@ async def fill_orbit_with_garbage(canvas, width):
             for _ in range(garbage_count):
                 column = random.randint(1, width - 1)
                 garbage_frame = random.choice(garbages)
-                variables.garbage_coroutines.append(fly_garbage(canvas, column, garbage_frame))
+                variables.garbage_coroutines.append(
+                    fly_garbage(canvas, column, garbage_frame)
+                )
 
             await wait(sleep_time)
             # Увеличение количества мусора с ограничением

@@ -1,6 +1,7 @@
 import asyncio
 from frame import draw_frame
 
+
 class Obstacle:
 
     def __init__(self, row, column, rows_size=1, columns_size=1, uid=None):

@@ -9,6 +9,7 @@ logging.basicConfig(
     level=logging.DEBUG
 )
 
+
 def load_file(filename):
     """
     Load the content of a file.
@@ -28,12 +29,16 @@ def get_frames(path):
     """
     Load and return a list of frames from the specified directory.
 
-    This function reads files from the given directory and returns a list of their contents.
-    It is primarily used for loading frame data for animations or graphical elements in the game.
-    If the specified directory does not exist or is empty, an error is logged, and the function returns None.
+    This function reads files from the given directory
+    and returns a list of their contents.
+    It is primarily used for loading frame data for animations
+    or graphical elements in the game.
+    If the specified directory does not exist or is empty,
+    an error is logged, and the function returns None.
 
     :param path: The path to the directory containing frame files.
-    :return: A list of strings, each representing the content of a frame file. Returns None if the directory is missing or empty.
+    :return: A list of strings, each representing the content of a frame file.
+    Returns None if the directory is missing or empty.
     """
     if not os.path.exists(path) or not os.listdir(path):
         logging.error(f"Directory '{path}' is missing or empty.")
@@ -45,7 +50,8 @@ def get_frames(path):
 
 
 def get_frame_size(text):
-    """Calculate size of multiline text fragment, return pair — number of rows and colums."""
+    """Calculate size of multiline text fragment,
+    return pair — number of rows and colums."""
     try:
         lines = text.splitlines()
         rows = len(lines)
@@ -56,7 +62,8 @@ def get_frame_size(text):
 
 
 def draw_frame(canvas, start_row, start_column, text, negative=False):
-    """Draw multiline text fragment on canvas, erase text instead of drawing if negative=True is specified."""
+    """Draw multiline text fragment on canvas,
+    erase text instead of drawing if negative=True is specified."""
     try:
         rows_number, columns_number = canvas.getmaxyx()
 
@@ -77,7 +84,8 @@ def draw_frame(canvas, start_row, start_column, text, negative=False):
                 if symbol == ' ':
                     continue
 
-                # Check that current position it is not in a lower right corner of the window
+                # Check that current position it is not in
+                # a lower right corner of the window
                 # Curses will raise exception in that case. Don`t ask why…
                 # https://docs.python.org/3/library/curses.html#curses.window.addch
                 if row == rows_number - 1 and column == columns_number - 1:

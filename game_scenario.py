@@ -22,6 +22,7 @@ PHRASES = {
     2020: "Take the plasma gun! Shoot the garbage!",
 }
 
+
 async def show_phrases(canvas, phase):
     """
     Display changing phrases in the status window.

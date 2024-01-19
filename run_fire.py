@@ -42,7 +42,13 @@ async def show_game_over(canvas, rows_number, columns_number):
         while True:
             draw_frame(canvas, rows_middle, columns_middle, game_over_frame)
             await asyncio.sleep(0)
-            draw_frame(canvas, rows_middle, columns_middle, game_over_frame, negative=True)
+            draw_frame(
+                canvas,
+                rows_middle,
+                columns_middle,
+                game_over_frame,
+                negative=True
+            )
     except Exception as e:
         logging.error(f"Error in show_game_over function: {e}", exc_info=True)
 

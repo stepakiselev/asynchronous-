@@ -34,24 +34,33 @@ EXPLOSION_FRAMES = [
             (
               (
             (
-            
     """,
 ]
+
 
 async def explode(canvas, center_row, center_column):
     """
     Animate an explosion at a specified location on the canvas.
 
-    This function creates an explosion animation using predefined frames. It displays each frame of the explosion at the specified center coordinates. Before starting the animation, it checks if the explosion frames are available. The function also triggers a beep sound to accompany the visual effect.
+    This function creates an explosion animation using predefined frames.
+    It displays each frame of the explosion
+    at the specified center coordinates.
+    Before starting the animation,
+    it checks if the explosion frames are available.
+    The function also triggers a beep sound to accompany the visual effect.
 
     :param canvas: The curses canvas where the explosion will be animated.
-    :param center_row: The row coordinate of the explosion's center on the canvas.
-    :param center_column: The column coordinate of the explosion's center on the canvas.
+    :param center_row: The row coordinate of the explosion's center
+    on the canvas.
+    :param center_column: The column coordinate of the explosion's
+    center on the canvas.
 
-    Note: The function logs an error and exits if the EXPLOSION_FRAMES list is empty.
+    Note: The function logs an error and exits
+    if the EXPLOSION_FRAMES list is empty.
     """
     if not EXPLOSION_FRAMES[0]:
-        logging.error(f"EXPLOSION_FRAMES is empty.")
+        logging.error("EXPLOSION_FRAMES is empty.")
+
     rows, columns = get_frame_size(EXPLOSION_FRAMES[0])
     corner_row = center_row - rows / 2
     corner_column = center_column - columns / 2

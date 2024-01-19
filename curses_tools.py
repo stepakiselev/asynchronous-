@@ -18,7 +18,6 @@ DOWN_KEY_CODE = 258
 
 def read_controls(canvas):
     """Read keys pressed and returns tuple witl controls state."""
-    
     rows_direction = columns_direction = 0
     space_pressed = False
 

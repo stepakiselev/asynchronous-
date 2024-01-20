@@ -1,14 +1,6 @@
-import logging
 import variables
 from space_garbage import wait
 
-# Logging configuration
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.DEBUG
-)
 
 PHRASES = {
     # Только на английском, Repl.it ломается на кириллице
@@ -23,19 +15,15 @@ PHRASES = {
 }
 
 
-async def show_phrases(canvas, phase):
+async def show_phrases(phase):
     """
     Display changing phrases in the status window.
 
-    :param canvas: Canvas for drawing.
     :param phase: Delay between changing phrases.
     """
-    try:
-        for year, text in PHRASES.items():
-            # Updating global variable 'year' to reflect current phrase's year
-            variables.year = year
-            status_text = f"{year}: {text}"
-            variables.text = status_text
-            await wait(phase)
-    except Exception as e:
-        logging.error(f"Error in show_phrases function: {e}", exc_info=True)
+    for year, text in PHRASES.items():
+        # Updating global variable 'year' to reflect current phrase's year
+        variables.year = year
+        status_text = f"{year}: {text}"
+        variables.text = status_text
+        await wait(phase)

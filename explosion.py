@@ -54,9 +54,6 @@ async def explode(canvas, center_row, center_column):
     on the canvas.
     :param center_column: The column coordinate of the explosion's
     center on the canvas.
-
-    Note: The function logs an error and exits
-    if the EXPLOSION_FRAMES list is empty.
     """
     if not EXPLOSION_FRAMES[0]:
         logging.error("EXPLOSION_FRAMES is empty.")
@@ -66,13 +63,10 @@ async def explode(canvas, center_row, center_column):
     corner_column = center_column - columns / 2
 
     curses.beep()
-    try:
-        for frame in EXPLOSION_FRAMES:
+    for frame in EXPLOSION_FRAMES:
 
-            draw_frame(canvas, corner_row, corner_column, frame)
+        draw_frame(canvas, corner_row, corner_column, frame)
 
-            await asyncio.sleep(0)
-            draw_frame(canvas, corner_row, corner_column, frame, negative=True)
-            await asyncio.sleep(0)
-    except Exception as e:
-        logging.error(f"Error in explode function: {e}", exc_info=True)
+        await asyncio.sleep(0)
+        draw_frame(canvas, corner_row, corner_column, frame, negative=True)
+        await asyncio.sleep(0)

@@ -1,6 +1,5 @@
 import curses
 import itertools
-import logging
 import random
 
 import variables
@@ -12,12 +11,6 @@ from physics import update_speed
 from run_fire import fire, show_game_over
 from space_garbage import fill_orbit_with_garbage, wait
 
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.DEBUG
-)
 
 TIC_TIMEOUT = 0.1
 ELEMENTS = ["+", "*", ".", ":"]
@@ -47,42 +40,37 @@ async def animate_spaceship(canvas, height, width):
     row = round(height - 5) - round(size_y / 2)
     column = round(width / 2) - round(size_x / 2)
     while True:
-        try:
-            direction_y, direction_x, shot = read_controls(canvas)
+        direction_y, direction_x, shot = read_controls(canvas)
 
-            row_speed, column_speed = update_speed(
-                row_speed, column_speed, direction_y, direction_x
-            )
-            row, column = row + row_speed, column + column_speed
+        row_speed, column_speed = update_speed(
+            row_speed, column_speed, direction_y, direction_x
+        )
+        row, column = row + row_speed, column + column_speed
 
-            pos_max_y, pos_max_x = (height - 1) - size_y, (width - 1) - size_x
+        pos_max_y, pos_max_x = (height - 1) - size_y, (width - 1) - size_x
 
-            row = max(min(row, pos_max_y), POS_MIN_Y)
-            column = max(min(column, pos_max_x), POS_MIN_X)
-            for obstacle in variables.obstacles:
-                if obstacle.has_collision(round(row), round(column)):
-                    variables.obstacles_in_last_collisions.append(obstacle)
-                    variables.garbage_coroutines.append(
-                        show_game_over(canvas, height, width)
-                    )
-                    await explode(canvas, round(row), round(column))
-                    return
-
-            draw_frame(canvas, row, column, current_frame)
-            if shot:
+        row = max(min(row, pos_max_y), POS_MIN_Y)
+        column = max(min(column, pos_max_x), POS_MIN_X)
+        for obstacle in variables.obstacles:
+            if obstacle.has_collision(round(row), round(column)):
+                variables.obstacles_in_last_collisions.append(obstacle)
                 variables.garbage_coroutines.append(
-                    fire(canvas, row, column + 2)
+                    show_game_over(canvas, height, width)
                 )
+                await explode(canvas, round(row), round(column))
+                return
 
-            await wait(TIC_RATE)
-
-            draw_frame(canvas, row, column, current_frame, negative=True)
-
-            current_frame = next(frame)
-        except Exception as e:
-            logging.error(
-                f"Error in animate_spaceship function: {e}", exc_info=True
+        draw_frame(canvas, row, column, current_frame)
+        if shot:
+            variables.garbage_coroutines.append(
+                fire(canvas, row, column + 2)
             )
+
+        await wait(TIC_RATE)
+
+        draw_frame(canvas, row, column, current_frame, negative=True)
+
+        current_frame = next(frame)
 
 
 async def blink(canvas, y_axis, x_axis, symbol, sequence=1):
@@ -100,28 +88,25 @@ async def blink(canvas, y_axis, x_axis, symbol, sequence=1):
     :param sequence: The initial state of the blinking sequence.
     """
     while True:
-        try:
-            if sequence == 0:
-                canvas.addstr(y_axis, x_axis, symbol, curses.A_DIM)
-                await wait(2)
-                sequence += 1
+        if sequence == 0:
+            canvas.addstr(y_axis, x_axis, symbol, curses.A_DIM)
+            await wait(2)
+            sequence += 1
 
-            if sequence == 1:
-                canvas.addstr(y_axis, x_axis, symbol)
-                await wait(0.3)
-                sequence += 1
+        if sequence == 1:
+            canvas.addstr(y_axis, x_axis, symbol)
+            await wait(0.3)
+            sequence += 1
 
-            if sequence == 2:
-                canvas.addstr(y_axis, x_axis, symbol, curses.A_BOLD)
-                await wait(0.5)
-                sequence += 1
+        if sequence == 2:
+            canvas.addstr(y_axis, x_axis, symbol, curses.A_BOLD)
+            await wait(0.5)
+            sequence += 1
 
-            if sequence == 3:
-                canvas.addstr(y_axis, x_axis, symbol)
-                await wait(0.3)
-                sequence = 0
-        except Exception as e:
-            logging.error(f"Error in blink function: {e}", exc_info=True)
+        if sequence == 3:
+            canvas.addstr(y_axis, x_axis, symbol)
+            await wait(0.3)
+            sequence = 0
 
 
 def create_stars(latitude, longitude, number=50):
@@ -218,7 +203,7 @@ def draw(canvas):
     canvas.nodelay(True)
     height, width = canvas.getmaxyx()
     draw_stars(canvas, height, width)
-    variables.garbage_coroutines.append(show_phrases(canvas, phase=TIME_PHASE))
+    variables.garbage_coroutines.append(show_phrases(phase=TIME_PHASE))
     variables.garbage_coroutines.append(
         animate_spaceship(canvas, height, width)
     )
@@ -229,11 +214,6 @@ def draw(canvas):
                 value.send(None)
             except StopIteration:
                 variables.garbage_coroutines.remove(value)
-            except Exception as e:
-                logging.error(
-                    f"Error inside while of draw function: {e}",
-                    exc_info=True
-                )
         canvas.border()
         canvas.refresh()
         # Перерисовка рамки подокна

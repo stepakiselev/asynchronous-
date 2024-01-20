@@ -124,21 +124,18 @@ async def fill_orbit_with_garbage(canvas, width):
     garbages = get_frames("garbage/")
     amount = 3  # начальное количество мусора
     max_amount = 10  # максимальное количество мусора
-    try:
-        while True:
-            delay_factor = get_garbage_delay_tic(variables.year)
-            sleep_time = delay_factor / 10  # преобразование задержки
+    while True:
+        delay_factor = get_garbage_delay_tic(variables.year)
+        sleep_time = delay_factor / 10  # преобразование задержки
 
-            garbage_count = random.randint(1, min(amount, max_amount))
-            for _ in range(garbage_count):
-                column = random.randint(1, width - 1)
-                garbage_frame = random.choice(garbages)
-                variables.garbage_coroutines.append(
-                    fly_garbage(canvas, column, garbage_frame)
-                )
+        garbage_count = random.randint(1, min(amount, max_amount))
+        for _ in range(garbage_count):
+            column = random.randint(1, width - 1)
+            garbage_frame = random.choice(garbages)
+            variables.garbage_coroutines.append(
+                fly_garbage(canvas, column, garbage_frame)
+            )
 
-            await wait(sleep_time)
-            # Увеличение количества мусора с ограничением
-            amount = min(amount + 2, max_amount)
-    except Exception as e:
-        logging.error(f"Error in fill_orbit_with_garbage: {e}", exc_info=True)
+        await wait(sleep_time)
+        # Увеличение количества мусора с ограничением
+        amount = min(amount + 2, max_amount)

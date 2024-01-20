@@ -1,14 +1,3 @@
-import logging
-
-
-# from space_garbage import load_file
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.DEBUG
-)
-
 SPACE_KEY_CODE = 32
 LEFT_KEY_CODE = 260
 RIGHT_KEY_CODE = 261
@@ -17,7 +6,7 @@ DOWN_KEY_CODE = 258
 
 
 def read_controls(canvas):
-    """Read keys pressed and returns tuple witl controls state."""
+    """Read keys pressed and returns tuple with controls state."""
     rows_direction = columns_direction = 0
     space_pressed = False
 
